@@ -17,7 +17,7 @@ def produce_cmap(cvals, colors, name):
     mincval, maxcval = min(cvals), max(cvals)
     norm = plt.Normalize(mincval, maxcval)
     tuples = list(zip(map(norm, cvals), colors))
-    cmap = LinearSegmentedColormap.from_list(name, tuples)
+    cmap = LinearSegmentedColormap.from_list(name, tuples, N=4196, gamma=1.0)
     # mpl.colormaps.register(cmap,name=name,force=false)
     return list((cmap, mincval, maxcval))
 
@@ -75,7 +75,7 @@ def produce_cmap_list():
               '#0000ff', '#000064',
               '#545454', '#a8ffff',
               'w', '#636363', 'k']
-    cmap_list.append(produce_cmap(cvals, colors, 'ir_color'))
+    cmap_list.append(produce_cmap(cvals, colors, 'wv_color'))
     cmap_names.append('wv_color')
 
     cvals = [-80, 0]
@@ -109,7 +109,7 @@ def produce_cmap_list():
     cmap_list.append(produce_cmap(cvals, colors, 'ir_bd'))
     cmap_names.append('ir_bd')
 
-    cvals = [-95, -85, -80.5, -75.5, -69.5, -63.5, -53.5, -41.5, -30.5,
+    cvals = [-95, -85.5, -80.5, -75.5, -69.5, -63.5, -53.5, -41.5, -30.5,
              9.5, 9.5,
              25, 50]
     colors = ['#ffffff', '#5038b0', '#a068e0', '#c42010', '#ff3000', '#f0b000', '#80ff00', '#18b080', '#0088b8',
@@ -118,8 +118,17 @@ def produce_cmap_list():
     cmap_list.append(produce_cmap(cvals, colors, 'ir_ca'))
     cmap_names.append('ir_ca')
 
-    cvals = [-85,
-             -85, -80.5,
+    cvals = [-95, -85.5, -80.5, -75.5, -69.5, -63.5, -53.5, -41.5, -30.5,
+             9.5,
+             9.5, 25, 50]
+    colors = ['#ffffff', '#5038b0', '#a068e0', '#a01010', '#ff3000', '#f0b000', '#80ff00', '#18b080', '#0088b8',
+              '#203040',
+              '#707070', '#000000', '#501800']
+    cmap_list.append(produce_cmap(cvals, colors, 'ir_ca_2'))
+    cmap_names.append('ir_ca_2')
+
+    cvals = [-85.5,
+             -85.5, -80.5,
              -80.5, -75.5,
              -75.5, -69.5,
              -69.5, -63.5,
@@ -143,8 +152,8 @@ def produce_cmap_list():
 
 
     cvals = [-100, -92,
-             -92, -85,
-             -85, -80.5,
+             -92, -85.5,
+             -85.5, -80.5,
              -80.5, -75.5,
              -75.5, -69.5,
              -69.5, -63.5,
@@ -215,7 +224,8 @@ def produce_cmap_list():
     cmap_list.append(produce_cmap(cvals, colors, 'wv_cc'))
     cmap_names.append('wv_cc')
 
-    cvals = [-90, -85,
+    cvals = [-100, -90,
+             -90, -85,
              -85, -80,
              -80, -75,
              -75, -70,
@@ -228,7 +238,8 @@ def produce_cmap_list():
              -25, -20,
              -20, -15,
              -15, -5]
-    colors = ['w', '#8282f0',
+    colors = ['w', '#fad2fa',
+              '#d7d7e1', '#7171e1',
               '#4132a0', '#00008c',
               '#231ee1', '#5a50f5',
               '#1478f0', '#28b4f0',
@@ -271,10 +282,10 @@ def produce_cmap_list():
              -30, -22.5,
              -22.5, -15, -7,
              -7, 0]
-    colors = ['#ffb0ff', '#c0a0ff',
-              '#a060f0', '#9060e0',
-              '#8080c0', '#608090',
-              '#509060', '#006030',
+    colors = ['#f0ffff', '#c0e0ff',
+              '#80d0f0', '#20a0b0',
+              '#60a090', '#3080a0',
+              '#508060', '#006030',
               '#007000', '#208020',
               '#40a040', '#70c070',
               '#90d090', 'w', '#2000b0',
@@ -283,6 +294,29 @@ def produce_cmap_list():
               '#ff7000', '#ff0000']
     cmap_list.append(produce_cmap(cvals, colors, 'wv_ssdd'))
     cmap_names.append('wv_ssdd')
+
+    cvals = [-100, -85.5,
+             -85.5, -80.5,
+             -80.5, -75.5,
+             -75.5, -69.5,
+             -69.5, -63.5,
+             -63.5, -53.5,
+             -53.5, -41.5,
+             -41.5, -30.5,
+             -30.5, 9.5,
+             9.5, 28]
+    colors = ['#6040a0','#6040a0',
+              '#5060d0', '#5060d0',
+              '#70a0c0', '#70a0c0',
+              '#9edae5', '#9edae5',
+              '#208010', '#208010',
+              '#bcbd8d', '#bcbd8d',
+              '#ff7f0e', '#ff7f0e',
+              '#c03030', '#c03030',
+              '#c49c94', '#8c564b',
+              'w', 'k']
+    cmap_list.append(produce_cmap(cvals, colors, 'ir_cb'))
+    cmap_names.append('ir_cb')
 
     cvals = [-95, -85, -81, -76, -70,
              -64, -54, -48, -42, -34,
@@ -312,7 +346,7 @@ def produce_cmap_list():
               '#f3cc02', '#f2de01', '#f2f301',
               '#8bf201', '#81ed01', '#4ed300', '#21bd01', '#0db402',
               '#05dbff', '#05a6ea', '#0457cf', '#0507b4', '#050700']
-    cmap_list.append(produce_cmap(cvals, colors, 'ir_pct_1'))
+    cmap_list.append(produce_cmap(cvals, colors, 'ir_nrl_h_1'))
     cmap_names.append('ir_nrl_h_1')
 
     cvals = [-173, -143, -113,
@@ -328,11 +362,29 @@ def produce_cmap_list():
     cmap_list.append(produce_cmap(cvals, colors, 'ir_pct_1'))
     cmap_names.append('ir_pct_1')
 
-    cvals = [100, 130, 160,
+
+    cvals = [-193, -168, -143,
+             -143, -113,
+             -113, -81,
+             -81, -65,
+             -65, -40,
+             -40, -13,
+             -13, 7, 17, 32]
+    colors = ['#003333', '#88bba0', '#ddffee',
+              '#ffddee', '#aa7788',
+              '#a36319', '#f90602',
+              '#f8c30d', '#f1e400',
+              '#8ef101', '#0bb617',
+              '#0ad5c2', '#0000bb',
+              '#040483', '#6a5acd', '#a590cc', '#e4e4ee']
+    cmap_list.append(produce_cmap(cvals, colors, 'ir_pct_2'))
+    cmap_names.append('ir_pct_2')
+
+    cvals = list(np.array([100, 130, 160,
              160, 192,
              192, 208,
              208, 233,
-             233, 265, 280, 300]
+             233, 265, 280, 300]) - 273.15)
     colors = ['#00194b', 'w', '#a05fe6',
               '#a05f19', '#fa0000',
               '#f0c800', '#ffff00',
@@ -413,28 +465,44 @@ def get_cmap(name='wv_nrl', sat_name='GOES_15_GVAR', b_num=3):
 
 # Indices to step through colormap
 
-def display_cmaps():
-    x = np.linspace(0.0, 1.0, 100)
-    cmaps = [i[0] for i in cmap_list]
+def display_my_cmaps(inputs=None):
+    cmaps = {}
+    gradient = np.linspace(-100, 50, 500)
+    produce_cmap_list()
 
-    for cmap in cmaps:
-        # Get RGB values for colormap and convert the colormap in
-        # CAM02-UCS colorspace.  lab[0, :, 0] is the lightness.
-        rgb = mpl.colormaps[cmap](x)[np.newaxis, :, :3]
-        lab = cspace_converter("sRGB1", "CAM02-UCS")(rgb)
+    if inputs == None:
+        cmap_list_display = cmap_list
+    else:
+        cmap_list_display = [i for i in cmap_list if i[0].name in inputs]
 
-        # Plot colormap L values.  Do separately for each category
-        # so each plot can be pretty.  To make scatter markers change
-        # color along plot:
-        # https://stackoverflow.com/q/8202605/
+    # Create figure and adjust figure height to number of colormaps
+    nrows = len(cmap_list_display)
+    figh = 0.35 + 0.15 + (nrows + (nrows - 1) * 0.1) * 0.22
+    fig, axs = plt.subplots(nrows=nrows, figsize=(14, figh))
+    fig.subplots_adjust(top=1 - 0.35 / figh, bottom=0.25 / figh,
+                        left=0.1, right=0.97)
+    axs[0].set_title(f'My colormaps', fontsize=14)
 
-        y_ = lab[0, :, 0]
-        c_ = x
 
-        plt.scatter(x, y_, c=c_, cmap=cmap, linewidths=0.0)
+    for ax, cmap in zip(axs, cmap_list_display):
+        ax.pcolormesh(list(gradient), [0,1], [list(gradient),list(gradient)], cmap=cmap[0], vmin=cmap[1], vmax=cmap[2])
+        ax.text(-0.01, 0.5, cmap[0].name, va='center', ha='right', fontsize=10,
+                transform=ax.transAxes)
+        ax.axis('off')
+        ax.xaxis.set_visible(False)  # Hide X-axis
+        ax.yaxis.set_visible(False)  # Hide Y-axis
 
-        plt.show()
+
+    axs[nrows - 1].axis('on')
+    axs[nrows - 1].xaxis.set_visible(True)
+    for direction in ['left','right','bottom','top']:
+        axs[nrows-1].spines[direction].set_color('none')
+
+
+    plt.show()
 
     return 0
 
-# display_cmaps()
+if False:
+    display_my_cmaps(['wv_nrl','wv_ssd','wv_nrl_extend','ir_color','wv_color','ir_bd','ir_ca_2','ir_cc','ir_cc_2',
+                  'wv_bd','wv_cc','wv_cc_2','wv_nrld','wv_ssdd','ir_cb','wv_test_1','ir_test_1'])

@@ -229,7 +229,7 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
                                   method="nearest")
 
 
-                    print(f'Interplation finished.')
+                    print(f'Interpolation finished.')
 
                     gradient = np.gradient(zi)
                     gradient = gradient[1] + 1j * gradient[0]
