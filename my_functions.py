@@ -436,6 +436,7 @@ def get_temp_text(min_temp, max_temp, av_temp, CDO_fixed_temp, do_ADT):
     else:
         temp_text_2 = ' '.join(['Min/Max \u2103:', min_temp_text, ',', max_temp_text])
     temp_text = temp_text_1 + '\n' + temp_text_2
+    temp_text = temp_text_2
 
     return temp_text
 

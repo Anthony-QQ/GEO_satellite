@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from my_cmap import get_cmap
 from my_functions import get_folder, r_to_RMW
+import plot_parameters as params
 
 
 def remove_1st_harmonic(BT_no_mean, angles, r_indices, i):
@@ -307,7 +308,8 @@ def plot_image(**kwargs):
         plt.plot(lon_edge, lat_edge, '-.', color=(0, 0.9, 0, 0.5))
 
     # Draw gridlines
-    ax.grid()
+    if kwargs['input']['show_gridline']:
+        ax.grid()
 
     # Draw BST track
     if kwargs['input']['use_track'] and kwargs['input']['plot_track']:
@@ -329,10 +331,12 @@ def plot_image(**kwargs):
         else:
             acc = 1
         # uses the RMW formula also found in ADT document
-        rmw_text = (f'R: {np.round(kwargs['input']['Eye_area_r'],acc)} km, '
+        RMW_text = (f'R: {np.round(kwargs['input']['Eye_area_r'],acc)} km, '
                     f'RMW: {np.round(r_to_RMW(kwargs['input']['Eye_area_r'], kwargs['input']['new_RMW']), acc)} km')
+        CDO_text = f'CDO R: {np.round(kwargs['input']['R_edge'] * 111,0)} km'
 
-        plt.title(f'{rmw_text}\n{kwargs['input']['pos_text']}\n{kwargs['input']['temp_text']}', loc='right', fontsize=10)
+        plt.title(f'{RMW_text}\n{CDO_text}\n{kwargs['input']['pos_text']}\n{kwargs['input']['temp_text']}',
+                  loc='right', fontsize=10)
     else:
         plt.title(f'{kwargs['input']['pos_text']}\n{kwargs['input']['temp_text']}', loc='right', fontsize=10)
 
@@ -353,7 +357,8 @@ def plot_image(**kwargs):
         #Joins paths to get destination path
         target_name = os.path.join(target_dir, image_name)
 
-        plt.savefig(target_name)  # saves to png file by default
+
+        plt.savefig(target_name)  # saves to png file by desirable default behaviour
         print(f'Saved to {target_name}')
 
     if kwargs['input']['show_image']:

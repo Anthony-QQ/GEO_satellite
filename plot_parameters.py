@@ -1,41 +1,43 @@
 update_ADT = False  #saves ADT txt files according to TC name
 save_image = False  #saves TC images to directories sorted by crop status, TC name, band
-save_CDO_image = False #saves CDO analysis image sorted by TC name, band
+save_CDO_image = False  #saves CDO analysis image sorted by TC name, band
 make_image = True  #creates the images
 show_image = True  #makes the image remain stuck in window
 
 plot_all_TC_images = False  #TAKES TIME
 
 
-TC_pos = [21.5, -53.8]
-im_size = [6]
-crop_param = TC_pos + im_size
+TC_pos = [21.5, -53.8]  #random initial guess of TC position
+im_extent = [6]  #Length of image, in degrees
+crop_param = TC_pos + im_extent
 
-plot_now = True
-ask_choices = False
-ask_TC = False
-ask_time = False
+plot_now = True   #Plot now or not
+ask_choices = False   #Ask for TC name/time, otherwise the code needs to be modified
+ask_TC = False   #Ask for TC name, otherwise the code needs to be modified
+ask_time = False   #Ask for TC time, otherwise the code needs to be modified
 
 
-draw_full = False
-draw_clean = False
-use_track = True
-plot_track = True
-show_center = True
-cc_size = 1
-use_CDO_size = True
-show_RMW = True
-new_RMW = True
-draw_CDO = True
-analyse_CDO = True
-show_CDO_analysis = False
-find_center = True
-quick_center = False
+draw_full = False   #Draw with or without cropping
+draw_clean = False   #Draw with or without elements and gridlines in the plot
+overwrite_image = True  #saves new image even when old one exist (DEFAULT)
+use_track = True   #Use track file or not
+plot_track = True   #Show track or not
+show_center = True   #Label fitted center or not
+cc_size = 1   #Center marker size
+use_CDO_size = True   #
+show_gridline = True   #Show lat/lon gridlines or not
+show_RMW = True   #Display RMW or not
+new_RMW = True   #Use newer (box) method of finding RMW or not
+draw_CDO = True   #
+analyse_CDO = True   #Analyse CDO traits (max/min temperature, standard deviation aka smoothness)
+show_CDO_analysis = False   #Show the plots of CDO traits
+find_center = True   #Attempt to locate a center, using an eye fit
+quick_center = False   #Default to a simpler center-finding algorithm
 do_ADT = True
 
 time_range = True
-default_cmap = False
-use_bw_cmap = False
+default_cmap = False   #Use default or user-specified colormaps
+use_bw_cmap = False   #Use black-and-white colormaps
 
 #cmap_name_list = ['wv_nrl','wv_ssd','wv_cc_2','ir_ca','ir_cc','ir_cc_2']
 cmap_name_list = ['wv_cc_2','ir_cc_2']
@@ -49,7 +51,8 @@ full_list = ['00_Keith', '01_Erin', '01_Michelle', '96_Hortense', '98_Georges', 
              '10_Earl', '16_Nicole', '17_Harvey', '17_Irma', '17_Jose', '17_Maria',
              '14_Simon', '15_Hilda', '15_Ignacio', '15_Patricia', '18_Hector', '18_Lane',
              '19_Dorian', '20_Epsilon', '20_Eta', '20_Iota', '20_Laura', '21_Sam', '23_Lee', '24_Milton16',
-             '23_Jova', '24_Milton', '25_Erin']
+             '23_Jova', '24_Milton', '25_Erin', '25_Melissa']
+
 
 #Correlated variables
 time_range = time_range and ask_time
@@ -81,5 +84,6 @@ elif use_bw_cmap:
     cmap_name_list = ['wv_bw', 'ir_bw']
 
 if draw_clean:
+    show_gridline = False
     plot_track = False
     show_center = False

@@ -21,13 +21,31 @@ from my_functions import (slice_FD, CDO_fit, CDO_stats, dateline_treatment, eye_
 from my_plotting import CDO_cs, plot_image_tuple, plot_image
 from plot_parameters import (update_ADT, draw_CDO, analyse_CDO, do_ADT, find_center,
                              make_image, new_RMW, plot_all_TC_images,
-                             plot_track, quick_center, save_image, show_CDO_analysis, save_CDO_image,
-                             show_center, show_image, show_RMW,use_CDO_size, use_track)
+                             plot_track, quick_center, save_image, show_CDO_analysis, save_CDO_image, overwrite_image,
+                             show_gridline, show_center, show_image, show_RMW,use_CDO_size, use_track)
 
 
 def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_name_list=None,
-             dpi=100, TC_marker_r=1, CDO_r=2.5, min_time=0, max_time=0,
+             dpi=100, TC_marker_r=1, CDO_r_default=1.5, min_time=0, max_time=0,
              time_range=False, use_track=True):
+    '''
+
+    :param f_num: file number in TC folder
+    :param sat_name: name of satellite
+    :param TC: name of TC
+    :param im_crop: a len=3 list of center latitude, longitude, square length in degrees
+    :param im_size: size of final plot in default units (inches)
+    :param no_crop: True = keep original data extent, False = crop to selected area
+    :param cmap_name_list: list of colormaps to use
+    :param dpi: dpi of the final plot
+    :param TC_marker_r: size of the marker of the TC center location
+    :param CDO_r_default: Default radius of CDO, in degrees
+    :param min_time: start time of series of plots
+    :param max_time: end time of series of plots
+    :param time_range: use range of time or not
+    :param use_track: use provided track data or not
+    :return: 1-D list containing ADT output
+    '''
 
     # Only save ABI images in 30-min intervals, process ADT in 10-min intervals
     ABI_interval = 30
@@ -74,10 +92,22 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
     else:
         top_text, image_datetime_object, image_datetime_text, image_mjd = get_ABI_time(ds, TC, sat_name, b_num)
 
-    skip_condition = (not ((image_datetime_object.minute % ABI_ADT_interval == 0)
-                           or np.max(lats_0) > 70 or np.min(lats_0) < -70 or sat_type == 'GVAR')
-                      and (save_image or save_CDO_image) and plot_all_TC_images)
-    if skip_condition:
+
+    #flags for skipping: 1. timestamp at an offset time; 2. ABI meso (not full disk or GVAR)
+    out_of_ABI_time = (image_datetime_object.minute % ABI_interval != 0)
+    out_of_ABI_ADT_time = (image_datetime_object.minute % ABI_ADT_interval != 0)
+    is_fd = np.max(lats_0) > 70 or np.min(lats_0) < -70
+    is_gvar = sat_type == 'GVAR'
+    is_meso = not (is_fd or is_gvar)
+
+    is_saving = save_image or save_CDO_image or update_ADT
+
+    skip_condition = out_of_ABI_time and is_meso and is_saving and plot_all_TC_images
+    skip_ADT_condition = out_of_ABI_ADT_time and is_meso and is_saving and plot_all_TC_images
+
+    skip_all = not update_ADT and skip_condition
+
+    if skip_all:
         print('Redundant data skipped')
         return 0
 
@@ -134,7 +164,7 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
 
 
     edge_crude = CDO_stats(BT_sliced, distances_sliced, angles_sliced, override_T=True)
-    R_bounds = [0, min(0.8, max(0.4, edge_crude / 2)), max(edge_crude, CDO_r), 10000]
+    R_bounds = [0, min(0.8, max(0.4, edge_crude / 2)), max(edge_crude, CDO_r_default), 10000]
     R_i_list = np.digitize(distances_sliced, R_bounds)
     min_temp = np.min(BT_sliced[R_i_list == 2])
     av_temp = np.mean(BT_sliced[R_i_list == 2])
@@ -212,7 +242,7 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
 
             rough_deviation = np.abs(lat_rough - lat_TC + 1j * (lon_rough - lon_TC))
 
-            if (not skip_condition and (plot_all_TC_images or not quick_center)):
+            if not (quick_center or (out_of_ABI_ADT_time and is_meso and update_ADT)):
 
                 x = np.array([lat_TC, lon_TC])
                 print(f'Starting array: {x}')
@@ -226,7 +256,7 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
                     Y = np.linspace(lat_TC - finder_limit, lat_TC + finder_limit, int(finder_limit / 0.01))
                     xi, yi = np.meshgrid(X, Y)
                     zi = griddata(np.dstack((lons_sliced.ravel(), lats_sliced.ravel()))[0], BT_sliced.ravel(), (xi, yi),
-                                  method="nearest")
+                                  method='nearest')
 
 
                     print(f'Interpolation finished.')
@@ -309,7 +339,7 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
         if do_ADT:
             TC_marker_r = R_out
         else:
-            TC_marker_r = CDO_r / 111
+            TC_marker_r = CDO_r_default / 111
     cm_size = 11800 * (im_size / im_scale * TC_marker_r) ** 2
 
     temp_text = get_temp_text(min_temp, max_temp, av_temp, CDO_fixed_temp, do_ADT)
@@ -370,8 +400,9 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
 
                                      'analyse_CDO': analyse_CDO, 'do_ADT': do_ADT, 'new_RMW': new_RMW,
                                      'no_crop': no_crop,'crop_status': crop_status, 'plot_track': plot_track,
-                                     'save_image': save_image, 'show_center': show_center,'show_image': show_image,
-                                     'show_RMW': show_RMW, 'use_track': use_track}
+                                     'save_image': save_image, 'overwrite_image': overwrite_image,
+                                     'show_gridline': show_gridline,'show_center': show_center,
+                                     'show_image': show_image, 'show_RMW': show_RMW, 'use_track': use_track}
 
 
                     plot_image(input=dict_plotting)
