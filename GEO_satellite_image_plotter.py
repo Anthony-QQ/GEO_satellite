@@ -34,8 +34,7 @@ def plot_files(TC_list, f_num_rel, plot_count):
         print(sat_name, folder_list)
         for TC in TC_list:
             if TC in folder_list:
-                if do_ADT:
-                    ADT_list = []
+                ADT_list = []
                     
                 file_list = browse_folder(sat_name, TC)
                 im_count = len(file_list)
@@ -76,8 +75,7 @@ def plot_files(TC_list, f_num_rel, plot_count):
         for TC in TC_list:
             if TC in folder_list:
                 projection = 0
-                if do_ADT:
-                    ADT_list = []
+                ADT_list = []
                     
                 file_list = browse_folder(sat_name, TC)
                 im_count = len(file_list)

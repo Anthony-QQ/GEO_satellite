@@ -117,13 +117,16 @@ def get_table(sat_name, b_number=3):
     # not usable, as file path uses double slashes instead of single
     return table_list
 
+
+
+
 def save_ADT(ADT_list, TC, do_ADT, update_ADT):
-    if (do_ADT):
+    if do_ADT:
         print(ADT_list)
-    if (do_ADT and update_ADT):
-        ADT_fname = 'D:/Documents/TC and Weather/Program/PyCharm/ADT/' + TC + '.txt'
-        ADT_list = np.array(ADT_list)
-        np.savetxt(ADT_fname, ADT_list)
+        if update_ADT:
+            ADT_fname = 'D:/Documents/TC and Weather/Program/PyCharm/ADT/' + TC + '.txt'
+            ADT_list = np.array(ADT_list)
+            np.savetxt(ADT_fname, ADT_list)
     return 0
 
 
@@ -144,6 +147,28 @@ def image_type(sat_name='GOES_15_GVAR', b_num=3):
         elif b_num in range(7, 17):
             tp = 'ir'
     return tp
+
+
+def get_sat_longitude(sat_name, year, lon_TC):
+    if sat_name in ['GOES_8_GVAR','GOES_12_GVAR','GOES_13_GVAR','GOES_16','GOES_19']:
+        return -75
+    elif sat_name in ['GOES_10_GVAR','GOES_11_GVAR']:
+        return -135
+    elif sat_name in ['GOES_15_GVAR','GOES_17','GOES_18']:
+        return -137
+    elif sat_name in ['GOES_14_GVAR']:
+        return -105
+    elif sat_name in ['H9_FD']:
+        return 140
+    elif sat_name == 'GOES_9_GVAR':
+        if year < 2001:
+            return -135
+        else:
+            return 155
+    else:
+        return lon_TC
+
+
 
 
 def ll_to_float(string):
@@ -282,8 +307,18 @@ def slice_FD_zz(BT_0, lats_0, lons_0, lat_min, lat_max, lon_min, lon_max, lat_TC
         crop_status = 'Cropped'
 
 
+def tropical_height(BT_0):
+    '''
 
+    :param BT_0: brightness temperture (in K or C)
+    :return: h: height (in km)
+    '''
+    if np.min(BT_0) > 0:
+        BT_0 -= 273.15
 
+    h = (305-BT_0) * (305-201)/(15-0)
+
+    return h
 
 
 def eye_fit_1(x, *c):
@@ -383,13 +418,14 @@ def get_eye_r(BT_0, distances, r_in, mid_temp):
     #takes inputs in degrees, returns radius in km
     r_mask = (distances < r_in)
     Eye_mask = np.multiply((BT_0 > mid_temp), (distances < r_in))
-    r = np.sqrt(Eye_mask.sum() / r_mask.sum()) * r_in * 111
+    r = np.sqrt(np.sum(Eye_mask) / np.sum(r_mask)) * r_in * 111
     return r
 
 def get_CDO_r(BT_Eye, mid_temp, Eye_r):
     r = np.sqrt(np.ma.sum(BT_Eye < mid_temp) / np.ma.count(BT_Eye) / np.pi) * (Eye_r * 222)
     return r
 def get_eye_box_r(lats_Eye, lons_Eye, lat_TC):
+    print(np.ma.max(lats_Eye), np.ma.min(lats_Eye), np.ma.max(lons_Eye), np.ma.min(lons_Eye))
     r = np.mean([np.ma.max(lats_Eye) - np.ma.min(lats_Eye),
                  (np.ma.max(lons_Eye) - np.ma.min(lons_Eye)) * np.cos(lat_TC * np.pi / 180)]) / 2 * 111 + 2
     return r
@@ -441,15 +477,17 @@ def get_temp_text(min_temp, max_temp, av_temp, CDO_fixed_temp, do_ADT):
     return temp_text
 
 
-def latlon_points_in_pairs(sp=5, cntr=[0,0], s=90):
-    sp = int(sp+0.9)
+def latlon_points_in_pairs(sp=5, cntr=None, s=90):
+    if cntr is None:
+        cntr = [0, 0]
+    sp_0 = int(sp + 0.9)
     xc, yc = cntr[0], cntr[1]
     if s == 90:
-        lat_range = np.arange(-int(89.99/sp)*sp, int(89.99/sp)*sp, sp)
-        lon_range = np.arange(0,360,sp)
+        lat_range = np.arange(-int(89.99 / sp_0) * sp_0, int(89.99 / sp_0) * sp_0, sp_0)
+        lon_range = np.arange(0, 360, sp_0)
     else:
-        lat_range = np.arange(int((xc-s+0.001)/sp)*sp, int((xc+s-0.001)/sp)*sp, sp)
-        lon_range = np.arange(int((yc-s+0.001)/sp)*sp, int((yc+s-0.001)/sp)*sp, sp)
+        lat_range = np.arange(int((xc-s+0.001) / sp_0) * sp_0, int((xc + s - 0.001) / sp_0) * sp_0, sp_0)
+        lon_range = np.arange(int((yc-s+0.001) / sp_0) * sp_0, int((yc + s - 0.001) / sp_0) * sp_0, sp_0)
     list_2d = [[i,j] for i in lat_range for j in lon_range]
     return np.array(list_2d)
 
@@ -511,6 +549,7 @@ def CDO_stats(BT_0, distances, angles, r=20, R_find=3, R_step=0.05, CDO_toleranc
                 R_edge = R_list_truncate[T_edge_i]
 
         return R_edge
-    except:
+    except Exception as e:
+        print(f'Error occurred: {e}')
         return 0
 

@@ -461,7 +461,7 @@ def get_cmap(name='wv_nrl', sat_name='GOES_15_GVAR', b_num=3):
         i = cmap_names.index(name)
         return cmap_list[i]
 
-    return 0
+
 
 # Indices to step through colormap
 

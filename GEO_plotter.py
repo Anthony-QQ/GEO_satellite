@@ -16,13 +16,14 @@ from MODIS_plotter import (process_MODIS,
                            MODIS_list)
 import mjd
 from my_functions import (slice_FD, CDO_fit, CDO_stats, dateline_treatment, eye_fit_2, eye_fit_3, get_CDO_r,
-                          get_detailed_track, get_eye_box_r, get_eye_r, get_eye_r_0, get_fn, get_mid_temp,
-                          get_region_pixels, get_table, get_TC_loc, get_temp_text, get_track, image_type)
+                          get_detailed_track, get_sat_longitude, get_eye_box_r, get_eye_r, get_eye_r_0, get_fn,
+                          get_mid_temp, get_region_pixels, get_table, get_TC_loc, get_temp_text, get_track, image_type)
 from my_plotting import CDO_cs, plot_image_tuple, plot_image
 from plot_parameters import (update_ADT, draw_CDO, analyse_CDO, do_ADT, find_center,
                              make_image, new_RMW, plot_all_TC_images,
                              plot_track, quick_center, save_image, show_CDO_analysis, save_CDO_image, overwrite_image,
-                             show_gridline, show_center, show_image, show_RMW,use_CDO_size, use_track)
+                             show_gridline, show_center, show_image, show_RMW,use_CDO_size, use_track,
+                             fix_parallax)
 
 
 def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_name_list=None,
@@ -92,7 +93,6 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
     else:
         top_text, image_datetime_object, image_datetime_text, image_mjd = get_ABI_time(ds, TC, sat_name, b_num)
 
-
     #flags for skipping: 1. timestamp at an offset time; 2. ABI meso (not full disk or GVAR)
     out_of_ABI_time = (image_datetime_object.minute % ABI_interval != 0)
     out_of_ABI_ADT_time = (image_datetime_object.minute % ABI_ADT_interval != 0)
@@ -117,11 +117,16 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
         TC_track = get_track(TC, dateline_adj)
         lat_TC, lon_TC = get_TC_loc(TC_track, image_mjd, dateline_adj)
         xpTrack, ypTrack = get_detailed_track(TC_track, image_mjd, i_s, dateline_adj)
+    else:
+        xpTrack, ypTrack = lon_TC, lat_TC
 
     lat_min, lat_max, lon_min, lon_max = (lat_TC - i_s / 2, lat_TC + i_s / 2,
                                           lon_TC - i_s / 2 / np.cos(np.radians(lat_TC)),
                                           lon_TC + i_s / 2 / np.cos(np.radians(lat_TC)))
     print('TC location:', np.round(lat_TC, 2), np.round(lon_TC, 2))
+
+
+
 
     # convert counts to brightness temperature
 
@@ -162,6 +167,13 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
         distances_sliced = distances
         angles_sliced = angles
 
+    if fix_parallax:
+        pass
+
+
+
+    # Get satellite longitude for parallax correction
+    sat_lon = get_sat_longitude(sat_name, image_datetime_object.year, lon_TC)
 
     edge_crude = CDO_stats(BT_sliced, distances_sliced, angles_sliced, override_T=True)
     R_bounds = [0, min(0.8, max(0.4, edge_crude / 2)), max(edge_crude, CDO_r_default), 10000]
@@ -177,6 +189,8 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
     Eye_area_r = get_eye_r(BT_sliced, distances_sliced, max(0.4, edge_crude / 3), mid_temp)
 
     R_edge = CDO_stats(BT_sliced, distances_sliced, angles_sliced, r=Eye_area_r)
+    Eye_area_r = get_eye_r(BT_sliced, distances_sliced, max(0.4, R_edge*0.9), mid_temp)
+
     R_bounds = [0, Eye_area_r / 111, max(R_edge , Eye_area_r/111 + 1), 10000]
     R_i_list = np.digitize(distances_sliced, R_bounds)
     CDO_mask = np.invert(distances_sliced < max(R_edge, Eye_area_r/111 + 1))
@@ -247,7 +261,7 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
                 x = np.array([lat_TC, lon_TC])
                 print(f'Starting array: {x}')
 
-                spiral_fit = True
+                spiral_fit = False
 
                 if spiral_fit:
 
@@ -290,16 +304,18 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
 
 
 
-    zz = np.cos(lat_TC * np.pi / 180) * np.subtract(lons_0, lon_TC) + 1j * np.subtract(lats_0, lat_TC)
-    distances = np.abs(zz)
+    zz_sliced = np.cos(lat_TC * np.pi / 180) * np.subtract(lons_sliced, lon_TC) + 1j * np.subtract(lats_sliced, lat_TC)
+    distances_sliced = np.abs(zz_sliced)
     #Angles from East going counter-clockwise
-    angles = np.angle(zz)
+    angles_sliced = np.angle(zz_sliced)
 
     Eye_mask = np.invert(np.multiply((BT_sliced > mid_temp), distances_sliced < R_edge))
     BT_CDO = ma.masked_array(BT_sliced, mask=CDO_mask)
     BT_Eye = ma.masked_array(BT_sliced, mask=Eye_mask)
     lats_Eye = ma.masked_array(lats_sliced, mask=Eye_mask)
     lons_Eye = ma.masked_array(lons_sliced, mask=Eye_mask)
+
+    print(get_eye_r(BT_sliced, distances_sliced, max(0.4, R_edge*0.9), mid_temp))
 
     if new_RMW and (Eye_area_r > 5):
         Eye_box_r = get_eye_box_r(lats_Eye, lons_Eye, lat_TC)
@@ -328,12 +344,11 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
     max_temp = np.max(BT_sliced[R_i_list_2 == 1])
 
 
-
-
     #image
     lat_range, lon_range = lat_max - lat_min, lon_max - lon_min
     im_scale = max(i_s, lat_range, lon_range)  # used in size of TC centre marker
     ratio = 1 / np.cos(np.radians(lat_TC))
+
 
     if use_CDO_size:
         if do_ADT:
@@ -365,8 +380,8 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
                 a_0 = amplitude
                 CH_ring.append({'order': order, 'amplitude': np.round(amplitude,3), 'angle': 0})
             for order in range(1, 5):
-                filter_1 = np.cos(angles * order)
-                filter_2 = np.cos(angles * order - np.pi / 2)
+                filter_1 = np.cos(angles_sliced * order)
+                filter_2 = np.cos(angles_sliced * order - np.pi / 2)
                 element = (np.ma.average(np.multiply(filter_1, BT_CDO_fixed - a_0)) + 1j * np.ma.average(
                     np.multiply(filter_2, BT_CDO_fixed - a_0))) / np.pi**0.5
                 amplitude = np.abs(element) * 2 * np.pi
@@ -414,5 +429,6 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
         print('ADT input:', ADT_data)
         return ADT_data
     else:
-        return BT_eye
-    return 0
+        return BT_Eye
+
+

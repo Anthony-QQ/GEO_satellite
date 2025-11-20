@@ -20,6 +20,7 @@ ask_time = False   #Ask for TC time, otherwise the code needs to be modified
 draw_full = False   #Draw with or without cropping
 draw_clean = False   #Draw with or without elements and gridlines in the plot
 overwrite_image = True  #saves new image even when old one exist (DEFAULT)
+fix_parallax = False
 use_track = True   #Use track file or not
 plot_track = True   #Show track or not
 show_center = True   #Label fitted center or not

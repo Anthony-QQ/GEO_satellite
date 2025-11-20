@@ -61,8 +61,6 @@ def CDO_cs(BT_0, distances, angles, b_dict=None, n_dict=None, r=10, R_find=3, R_
         r_indices = np.digitize(distances, R_list)
         T_list = [np.mean(BT_0[r_indices == i]) for i in range(1, len(R_list))]
         std_list = [np.std(BT_0[r_indices == i]) for i in range(1, len(R_list))]
-        if b_dict['symmetric']:
-            symm_std_list = [remove_1st_harmonic(BT_0 - T_list[i-1], angles, r_indices, i)for i in range(1, len(R_list))]
 
 
         #trimming
@@ -126,6 +124,8 @@ def CDO_cs(BT_0, distances, angles, b_dict=None, n_dict=None, r=10, R_find=3, R_
             ax2.scatter(R_smooth, std_min, c='r', label=f'Min_stdev {std_min:.2f}')
 
             if b_dict['symmetric']:
+                symm_std_list = [remove_1st_harmonic(BT_0 - T_list[i - 1], angles, r_indices, i) for i in
+                                 range(1, len(R_list)+1)]
                 symm_std_min = np.min(symm_std_list[std_i_start:std_i_end])
                 R_symm_smooth = R_list[np.argmin(symm_std_list[std_i_start:std_i_end]) + std_i_start]
                 color = 'm'
@@ -271,53 +271,55 @@ def plot_image(**kwargs):
     #(top_text, pos_text, temp_text, image_datetime_text, TC, cmap_name, f_num, sat_name, b_num) = bundle_3
     #(analyse_CDO, do_ADT, new_RMW, no_crop, plot_track, save_image, show_center, show_image, show_RMW, use_track) = bundle_4
 
-    fig = plt.figure(kwargs['input']['f_num'] + 1, dpi=kwargs['input']['dpi'], facecolor='w',
-                     figsize=(kwargs['input']['im_size'], kwargs['input']['im_size']))
+    my_input = kwargs['input']
+
+    fig = plt.figure(my_input['f_num'] + 1, dpi=my_input['dpi'], facecolor='w',
+                     figsize=(my_input['im_size'], my_input['im_size']))
     ax = fig.add_subplot(1, 1, 1)
 
     # Figure size
-    ax.set_aspect(kwargs['input']['ratio'])
-    ax.set_box_aspect(kwargs['input']['ratio']**0)
+    ax.set_aspect(my_input['ratio'])
+    ax.set_box_aspect(my_input['ratio'] ** 0)
 
     # colourmap limits
-    cmap, vmin, vmax = get_cmap(kwargs['input']['cmap_name'], kwargs['input']['sat_name'], kwargs['input']['b_num'])
+    cmap, vmin, vmax = get_cmap(my_input['cmap_name'], my_input['sat_name'], my_input['b_num'])
 
     # Actual image
-    im = ax.pcolormesh(kwargs['input']['lons'], kwargs['input']['lats'], kwargs['input']['BT'],
+    im = ax.pcolormesh(my_input['lons'], my_input['lats'], my_input['BT'],
                        cmap=cmap, vmin=vmin, vmax=vmax, shading='nearest')
 
-    if kwargs['input']['show_center'] and (not kwargs['input']['no_crop'] or kwargs['input']['use_track']):
+    if my_input['show_center'] and (not my_input['no_crop'] or my_input['use_track']):
         theta = np.linspace(0, 2 * np.pi, 150)
 
         # Mark centre of eye using small circle
-        if kwargs['input']['Eye_area_r'] > 10:
-            plt.scatter(kwargs['input']['lon_TC'], kwargs['input']['lat_TC'], s=kwargs['input']['cm_size'] / 2500,
+        if my_input['Eye_area_r'] > 10:
+            plt.scatter(my_input['lon_TC'], my_input['lat_TC'], s=my_input['cm_size'] / 2500,
                         facecolors=(1, 0, 0, 0.5), edgecolors='none')
 
         # Mark CDO sizes using parametric circles
-        lon_inner = kwargs['input']['R_inner'] * np.cos(theta) * kwargs['input']['ratio'] + kwargs['input']['lon_TC']
-        lat_inner = kwargs['input']['R_inner'] * np.sin(theta) + kwargs['input']['lat_TC']
-        lon_outer = kwargs['input']['R_out'] * np.cos(theta) * kwargs['input']['ratio'] + kwargs['input']['lon_TC']
-        lat_outer = kwargs['input']['R_out'] * np.sin(theta) + kwargs['input']['lat_TC']
+        lon_inner = my_input['R_inner'] * np.cos(theta) * my_input['ratio'] + my_input['lon_TC']
+        lat_inner = my_input['R_inner'] * np.sin(theta) + my_input['lat_TC']
+        lon_outer = my_input['R_out'] * np.cos(theta) * my_input['ratio'] + my_input['lon_TC']
+        lat_outer = my_input['R_out'] * np.sin(theta) + my_input['lat_TC']
         plt.plot(lon_inner, lat_inner, '-.', color=(1, 0, 1, 0.5))
         plt.plot(lon_outer, lat_outer, '-.', color=(1, 0, 1, 0.5))
 
         # Mark CDO edge
-        lon_edge = kwargs['input']['R_edge'] * np.cos(theta) * kwargs['input']['ratio'] + kwargs['input']['lon_TC']
-        lat_edge = kwargs['input']['R_edge'] * np.sin(theta) + kwargs['input']['lat_TC']
+        lon_edge = my_input['R_edge'] * np.cos(theta) * my_input['ratio'] + my_input['lon_TC']
+        lat_edge = my_input['R_edge'] * np.sin(theta) + my_input['lat_TC']
         plt.plot(lon_edge, lat_edge, '-.', color=(0, 0.9, 0, 0.5))
 
     # Draw gridlines
-    if kwargs['input']['show_gridline']:
+    if my_input['show_gridline']:
         ax.grid()
 
     # Draw BST track
-    if kwargs['input']['use_track'] and kwargs['input']['plot_track']:
-        ax.plot(kwargs['input']['xpTrack'], kwargs['input']['ypTrack'], '-.', color=(0, 0, 0, 0.5))
+    if my_input['use_track'] and my_input['plot_track']:
+        ax.plot(my_input['xpTrack'], my_input['ypTrack'], '-.', color=(0, 0, 0, 0.5))
 
     # Add title of chart
-    image_type_text = f'{kwargs['input']['crop_status']}_{kwargs['input']['cmap_name']}'
-    title_text = f'{kwargs['input']['top_text']} \n {image_type_text} \nTime valid:{kwargs['input']['image_datetime_text']}'
+    image_type_text = f'{my_input['crop_status']}_{my_input['cmap_name']}'
+    title_text = f'{my_input['top_text']} \n {image_type_text} \nTime valid:{my_input['image_datetime_text']}'
     ax.set_title(title_text, fontsize=16)
 
     # Place colormap bar
@@ -325,32 +327,32 @@ def plot_image(**kwargs):
     plt.colorbar(im, cax=cax)
 
     # temperatures and position information
-    if kwargs['input']['show_RMW']:
-        if kwargs['input']['Eye_area_r'] > 10:
+    if my_input['show_RMW']:
+        if my_input['Eye_area_r'] > 10:
             acc = 1
         else:
             acc = 1
         # uses the RMW formula also found in ADT document
-        RMW_text = (f'R: {np.round(kwargs['input']['Eye_area_r'],acc)} km, '
-                    f'RMW: {np.round(r_to_RMW(kwargs['input']['Eye_area_r'], kwargs['input']['new_RMW']), acc)} km')
-        CDO_text = f'CDO R: {np.round(kwargs['input']['R_edge'] * 111,0)} km'
+        RMW_text = (f'R: {np.round(my_input['Eye_area_r'], acc)} km, '
+                    f'RMW: {np.round(r_to_RMW(my_input['Eye_area_r'], my_input['new_RMW']), acc)} km')
+        CDO_text = f'CDO R: {np.round(my_input['R_edge'] * 111, 0)} km'
 
-        plt.title(f'{RMW_text}\n{CDO_text}\n{kwargs['input']['pos_text']}\n{kwargs['input']['temp_text']}',
+        plt.title(f'{RMW_text}\n{CDO_text}\n{my_input['pos_text']}\n{my_input['temp_text']}',
                   loc='right', fontsize=10)
     else:
-        plt.title(f'{kwargs['input']['pos_text']}\n{kwargs['input']['temp_text']}', loc='right', fontsize=10)
+        plt.title(f'{my_input['pos_text']}\n{my_input['temp_text']}', loc='right', fontsize=10)
 
 
     # Saving to image
-    if kwargs['input']['save_image']:
+    if my_input['save_image']:
 
-        image_name = f'{kwargs['input']['top_text']}_{image_type_text}_{kwargs['input']['image_datetime_text']}'
+        image_name = f'{my_input['top_text']}_{image_type_text}_{my_input['image_datetime_text']}'
 
         # The folder for output_images is on the same level as the folder with .nc files
         target_dir = os.path.join(get_folder(type='output_image'),
-                                  kwargs['input']['crop_status'],
-                                  kwargs['input']['TC'],
-                                  f'Band_{kwargs['input']['b_num']}')
+                                  my_input['crop_status'],
+                                  my_input['TC'],
+                                  f'Band_{my_input['b_num']}')
         print(target_dir)
         os.makedirs(target_dir, exist_ok=True)
 
@@ -361,7 +363,7 @@ def plot_image(**kwargs):
         plt.savefig(target_name)  # saves to png file by desirable default behaviour
         print(f'Saved to {target_name}')
 
-    if kwargs['input']['show_image']:
+    if my_input['show_image']:
         plt.show()
 
     plt.close()
