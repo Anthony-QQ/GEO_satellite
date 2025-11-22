@@ -23,8 +23,8 @@ def produce_cmap(cvals, colors, name):
 
 
 def produce_cmap_list():
-    global cmap_names
-    global cmap_list
+    #global cmap_names
+    #global cmap_list
     cmap_names = []
     cmap_list = []
 
@@ -393,7 +393,10 @@ def produce_cmap_list():
     cmap_list.append(produce_cmap(cvals, colors, 'pct_1'))
     cmap_names.append('pct_1')
 
-    return 0
+    return cmap_names, cmap_list
+
+
+cmap_names, cmap_list = produce_cmap_list()
 
 
 def get_cmap(name='wv_nrl', sat_name='GOES_15_GVAR', b_num=3):

@@ -3,9 +3,12 @@ import numpy as np
 import numpy.ma as ma
 from datetime import datetime
 from scipy.interpolate import interp1d, griddata, NearestNDInterpolator
+import matplotlib.pyplot as plt
 import xarray as xr
 
 import mjd
+
+
 
 '''
 import sys
@@ -46,6 +49,7 @@ from shutil import make_archive
 
 GVAR_list = ['GOES_' + str(i) + '_GVAR' for i in range(8, 16)]
 ABI_list = ['GOES_' + str(i) for i in range(16, 21)]
+FD_list = ['19_Dorian']
 
 def get_sat_file_type(file_type='sat', type='ABI'):
     if type in ['MODIS']:
@@ -151,22 +155,23 @@ def image_type(sat_name='GOES_15_GVAR', b_num=3):
 
 def get_sat_longitude(sat_name, year, lon_TC):
     if sat_name in ['GOES_8_GVAR','GOES_12_GVAR','GOES_13_GVAR','GOES_16','GOES_19']:
-        return -75
+        sat_lon = -75
     elif sat_name in ['GOES_10_GVAR','GOES_11_GVAR']:
-        return -135
+        sat_lon = -135
     elif sat_name in ['GOES_15_GVAR','GOES_17','GOES_18']:
-        return -137
+        sat_lon = -137
     elif sat_name in ['GOES_14_GVAR']:
-        return -105
+        sat_lon = -105
     elif sat_name in ['H9_FD']:
-        return 140
+        sat_lon = 140
     elif sat_name == 'GOES_9_GVAR':
         if year < 2001:
-            return -135
+            sat_lon = -135
         else:
-            return 155
+            sat_lon = 155
     else:
-        return lon_TC
+        sat_lon = lon_TC
+    return sat_lon
 
 
 
@@ -250,11 +255,23 @@ def r_to_RMW(r=16, new_RMW=True):
         return 2.8 + 0.8 * r
 
 
-def slice_FD(BT_0, lats_0, lons_0, lat_min, lat_max, lon_min, lon_max):
+def slice_FD(BT_0, lats_0, lons_0, lat_min, lat_max, lon_min, lon_max, buffer=0.3):
+    '''
+
+    :param BT_0: Brightness Temperature
+    :param lats_0:
+    :param lons_0:
+    :param lat_min:
+    :param lat_max:
+    :param lon_min:
+    :param lon_max:
+    :param buffer:
+    :return:
+    '''
     # Find all indices inside the lat/lon bounding box
     inside = (
-            (lats_0 >= lat_min) & (lats_0 <= lat_max) &
-            (lons_0 >= lon_min) & (lons_0 <= lon_max)
+            (lats_0 >= lat_min - buffer) & (lats_0 <= lat_max + buffer) &
+            (lons_0 >= lon_min - buffer) & (lons_0 <= lon_max + buffer)
     )
 
     i_idx, j_idx = np.where(inside)
@@ -314,11 +331,42 @@ def tropical_height(BT_0):
     :return: h: height (in km)
     '''
     if np.min(BT_0) > 0:
+        print(np.min(BT_0))
         BT_0 -= 273.15
 
-    h = (305-BT_0) * (305-201)/(15-0)
+    h = (305-273.15-BT_0) * (15-0)/(305-201)
 
     return h
+
+def latlon_fix_parallax(BT, lats, lons, sat_lon):
+    '''
+    Adjusts for the parallax of GEO satellite.
+
+    :param BT: Brightness Temperature (preferably in C)
+    :param lats: 2-D Latitudes
+    :param lons: 2-D Longitudes
+    :param sat_lon: Longitude of satellite (default: latitude=0); this assumes the data and satellite longitude are on the same side of the IDL
+    :return:
+    '''
+
+    R_Earth = 6371
+    R_GEO = 42164
+
+    lats_diff_rad = np.radians(lats)
+    lons_diff_rad = np.radians(lons - sat_lon)
+
+    parallax_bearings = np.pi/2 - np.arccos(np.sin(lats_diff_rad) * np.cos(lons_diff_rad) / np.sin(
+        np.arccos(np.cos(lats_diff_rad) * np.cos(lons_diff_rad)))) * np.sign(lons_diff_rad)
+    parallax_rad = np.arcsin(np.sqrt(1 - np.power(np.cos(lats_diff_rad) * np.cos(lons_diff_rad), 2)) / (np.sqrt(
+        R_Earth ** 2 + R_GEO ** 2 - 2 * R_Earth * R_GEO * np.cos(lats_diff_rad) * np.cos(lons_diff_rad)) / R_GEO))
+    parallax_heights = tropical_height(BT)
+    parallax_distance = parallax_heights / 111 * np.tan(parallax_rad)
+
+    parallax_lat = np.nan_to_num(parallax_distance * np.sin(parallax_bearings))
+    parallax_lon = np.nan_to_num(parallax_distance * np.cos(parallax_bearings) * np.cos(np.radians(lats)))
+
+
+    return lats - parallax_lat, lons - parallax_lon
 
 
 def eye_fit_1(x, *c):
@@ -382,8 +430,8 @@ def eye_fit_3(x, *c):
 
     #Native parameters
     d_index = 0.5
-    r_boundary = 1
-    bst_offset_index = 2
+    r_boundary = 1.2
+    bst_offset_index = 3
     spiral_offset = 10
 
     ci = (xi - lon_TC) + 1j * (yi - lat_TC)
@@ -456,7 +504,7 @@ def get_mid_temp(min_temp, max_temp, im_type, TC=None):
         #convection is weak
         T = min_temp + 20
 
-    print(min_temp, T, max_temp)
+    print(f'Min T: {min_temp:3f}, Mid T: {T:3f}, Max T: {max_temp:3f}')
 
     return T
 
@@ -532,14 +580,13 @@ def CDO_stats(BT_0, distances, angles, r=20, R_find=3, R_step=0.05, CDO_toleranc
         T_list_truncate = T_list[T_min_i:]
 
         #First ring that is too rough
-        std_edge_i = [n for n, i in enumerate(std_list_truncate) if i > (std_min + CDO_tolerance)][0]
-        R_1 = R_list_truncate[std_edge_i]
+        std_edge_i = [i + std_i_start for i, s in enumerate(std_list[std_i_start:]) if
+                      s > (np.min(std_list[std_i_start:std_i_start + i + 1]) + CDO_tolerance)][0]
 
         #First ring that is too warm
-        T_edge_i = [n for n,i in enumerate(T_list_truncate) if i > (T_min + T_tolerance)][0]
-        R_2 = R_list_truncate[T_edge_i]
+        T_edge_i = [i for i, t in enumerate(T_list_truncate) if t > (np.min(T_list_truncate[:i+1]) + T_tolerance)][0]
 
-        R_edge = min(R_1,R_2)
+        R_edge = min(R_list_truncate[std_edge_i],R_list_truncate[T_edge_i])
 
         if override_T:
             if max(T_list_truncate) < -50:

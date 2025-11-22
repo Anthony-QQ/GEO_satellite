@@ -1,3 +1,5 @@
+import cartopy.feature as cfeature
+
 update_ADT = False  #saves ADT txt files according to TC name
 save_image = False  #saves TC images to directories sorted by crop status, TC name, band
 save_CDO_image = False  #saves CDO analysis image sorted by TC name, band
@@ -5,7 +7,7 @@ make_image = True  #creates the images
 show_image = True  #makes the image remain stuck in window
 
 plot_all_TC_images = False  #TAKES TIME
-
+use_multiprocessing = True  #Use multiprocessing to increast CPU utilisation, but only if expected data count is large
 
 TC_pos = [21.5, -53.8]  #random initial guess of TC position
 im_extent = [6]  #Length of image, in degrees
@@ -16,20 +18,26 @@ ask_choices = False   #Ask for TC name/time, otherwise the code needs to be modi
 ask_TC = False   #Ask for TC name, otherwise the code needs to be modified
 ask_time = False   #Ask for TC time, otherwise the code needs to be modified
 
+fix_parallax = True  #Approximate fix for the effects of parallax of GEO satellites
+plot_interp = False   #Plot using interpolated data points
+plot_interp_size = 1 / 111   #Spacing of interpolation of the grid, in degrees latitude/longitude
 
 draw_full = False   #Draw with or without cropping
 draw_clean = False   #Draw with or without elements and gridlines in the plot
 overwrite_image = True  #saves new image even when old one exist (DEFAULT)
-fix_parallax = False
+use_cartopy = True   #Uses Cartopy to draw images
+
 use_track = True   #Use track file or not
 plot_track = True   #Show track or not
 show_center = True   #Label fitted center or not
 cc_size = 1   #Center marker size
 use_CDO_size = True   #
 show_gridline = True   #Show lat/lon gridlines or not
+show_coastline = True   #Show coastlines via Cartopy
 show_RMW = True   #Display RMW or not
+
 new_RMW = True   #Use newer (box) method of finding RMW or not
-draw_CDO = True   #
+draw_CDO = True   #?
 analyse_CDO = True   #Analyse CDO traits (max/min temperature, standard deviation aka smoothness)
 show_CDO_analysis = False   #Show the plots of CDO traits
 find_center = True   #Attempt to locate a center, using an eye fit
@@ -42,6 +50,7 @@ use_bw_cmap = False   #Use black-and-white colormaps
 
 #cmap_name_list = ['wv_nrl','wv_ssd','wv_cc_2','ir_ca','ir_cc','ir_cc_2']
 cmap_name_list = ['wv_cc_2','ir_cc_2']
+#cmap_name_list = ['wv_bw','ir_bw']
 
 full_list = ['00_Keith', '01_Erin', '01_Michelle', '96_Hortense', '98_Georges', '98_Mitch', '99_Bret', '99_Floyd', '99_Lenny',
              '03_Lupit', '03_Maemi', '04_Dianmu', '04_Heta', '97_Linda',
@@ -52,7 +61,8 @@ full_list = ['00_Keith', '01_Erin', '01_Michelle', '96_Hortense', '98_Georges', 
              '10_Earl', '16_Nicole', '17_Harvey', '17_Irma', '17_Jose', '17_Maria',
              '14_Simon', '15_Hilda', '15_Ignacio', '15_Patricia', '18_Hector', '18_Lane',
              '19_Dorian', '20_Epsilon', '20_Eta', '20_Iota', '20_Laura', '21_Sam', '23_Lee', '24_Milton16',
-             '23_Jova', '24_Milton', '25_Erin', '25_Melissa']
+             '23_Jova',
+             '24_Milton', '25_Erin', '25_Melissa']
 
 
 #Correlated variables
@@ -64,20 +74,30 @@ if draw_full:
     show_CDO_analysis = False
 if update_ADT:
     plot_all_TC_images = True
+    make_image = False
     show_image = False
     save_image = False
     save_CDO_image = False
+    fix_parallax = True
     show_CDO_analysis = False
 if save_image or save_CDO_image:
     make_image = True
     show_image = False
     show_CDO_analysis = False
+    analyse_CDO = False   #No need to do complicated analysis of CDO
     default_cmap = True
     if draw_full:
         plot_track = False
         show_center = False
+    if not save_CDO_image:
+        draw_CDO = False
 if not (update_ADT or save_CDO_image or save_image):
     plot_all_TC_images = False
+
+if plot_all_TC_images:
+    use_cartopy = False
+else:
+    use_multiprocessing = False
 
 if default_cmap:
     cmap_name_list = ['wv_nrl','wv_ssd','wv_cc_2','wv_bw','ir_bd','ir_ca','ir_cc','ir_cc_2','ir_bw']
@@ -88,3 +108,9 @@ if draw_clean:
     show_gridline = False
     plot_track = False
     show_center = False
+
+if use_cartopy and show_coastline:
+    #Create coastline Feature, only once! It is reusable. Using lowest resolution of 50m, while 110m and 10m are possible.
+    coast = cfeature.COASTLINE.with_scale('50m')
+else:
+    coast = None

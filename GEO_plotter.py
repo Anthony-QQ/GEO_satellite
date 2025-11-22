@@ -16,14 +16,16 @@ from MODIS_plotter import (process_MODIS,
                            MODIS_list)
 import mjd
 from my_functions import (slice_FD, CDO_fit, CDO_stats, dateline_treatment, eye_fit_2, eye_fit_3, get_CDO_r,
-                          get_detailed_track, get_sat_longitude, get_eye_box_r, get_eye_r, get_eye_r_0, get_fn,
+                          get_detailed_track, get_sat_longitude, tropical_height, latlon_fix_parallax,
+                          get_eye_box_r, get_eye_r, get_eye_r_0, get_fn,
                           get_mid_temp, get_region_pixels, get_table, get_TC_loc, get_temp_text, get_track, image_type)
-from my_plotting import CDO_cs, plot_image_tuple, plot_image
+from my_plotting import CDO_cs, plot_image
 from plot_parameters import (update_ADT, draw_CDO, analyse_CDO, do_ADT, find_center,
                              make_image, new_RMW, plot_all_TC_images,
                              plot_track, quick_center, save_image, show_CDO_analysis, save_CDO_image, overwrite_image,
                              show_gridline, show_center, show_image, show_RMW,use_CDO_size, use_track,
                              fix_parallax)
+import plot_parameters as pm
 
 
 def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_name_list=None,
@@ -130,18 +132,31 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
 
     # convert counts to brightness temperature
 
-    # slice minimal data (for FD)
+    # slice minimal data (mostly serving FD)
 
     BT_sliced, lats_sliced, lons_sliced = slice_FD(BT_0, lats_0, lons_0, lat_min, lat_max, lon_min, lon_max)
 
+    # Get satellite longitude for parallax correction
+    sat_longitude = get_sat_longitude(sat_name, image_datetime_object.year, lon_TC)
+    if dateline_adj:
+        sat_longitude = dateline_treatment(sat_longitude)
+
     # crop data
     if no_crop:
-        BT_cropped = BT_0
-        lats = lats_0
-        lons = lons_0
-        lat_min, lat_max, lon_min, lon_max = np.min(lats), np.max(lats), np.min(lons), np.max(lons)
         crop_status = 'Not_cropped'
+        if fix_parallax:
+            crop_status = crop_status + '_PA'  # Add suffix to show it's parallax adjusted
+            lats_0, lons_0 = latlon_fix_parallax(BT_0, lats_0, lons_0, sat_longitude)
+
+        BT_cropped, lats, lons = BT_0, lats_0, lons_0
+        lat_min, lat_max, lon_min, lon_max = np.min(lats), np.max(lats), np.min(lons), np.max(lons)
+
     else:
+        crop_status = 'Cropped'
+        if fix_parallax:
+            crop_status = crop_status + '_PA'  # Add suffix to show it's parallax adjusted
+            lats_sliced, lons_sliced = latlon_fix_parallax(BT_sliced, lats_sliced, lons_sliced, sat_longitude)
+
         BT_0, lats_0, lons_0 = BT_sliced, lats_sliced, lons_sliced
 
         keep_values = np.multiply(np.multiply((lats_0 > lat_min), (lats_0 < lat_max)),
@@ -150,7 +165,7 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
         lats = np.minimum(np.maximum(lats_0, lat_min), lat_max)
         lons = np.minimum(np.maximum(lons_0, lon_min), lon_max)
 
-        crop_status = 'Cropped'
+
 
     # find rough CDO size
     zz = np.cos(lat_TC * np.pi / 180) * np.subtract(lons_0, lon_TC) + 1j * np.subtract(lats_0, lat_TC)
@@ -167,13 +182,9 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
         distances_sliced = distances
         angles_sliced = angles
 
-    if fix_parallax:
-        pass
 
 
 
-    # Get satellite longitude for parallax correction
-    sat_lon = get_sat_longitude(sat_name, image_datetime_object.year, lon_TC)
 
     edge_crude = CDO_stats(BT_sliced, distances_sliced, angles_sliced, override_T=True)
     R_bounds = [0, min(0.8, max(0.4, edge_crude / 2)), max(edge_crude, CDO_r_default), 10000]
@@ -197,41 +208,6 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
     Eye_mask = np.invert(np.multiply((BT_sliced > mid_temp), distances_sliced < R_edge))
     BT_CDO = ma.masked_array(BT_sliced, mask=CDO_mask)
     BT_Eye = ma.masked_array(BT_sliced, mask=Eye_mask)
-
-
-
-    '''
-    CDO_keep = get_region_pixels(lats_0, lons_0, lat_TC, lon_TC, CDO_r)
-    BT_CDO = ma.masked_array(BT_0, mask=np.invert(CDO_keep))
-    min_temp, av_temp = np.ma.min(BT_CDO), np.ma.average(BT_CDO)
-    CDO_area_r = np.sqrt(np.ma.sum(BT_CDO < min_temp + CDO_deltaT) / np.ma.count(BT_CDO) / np.pi) * 111 * CDO_r * 2
-    CDO_limit = CDO_area_r
-
-    Eye_r = (CDO_area_r / 2 - 0) / 111  # Preliminary region of the eye, slightly less than half of that of the CDO
-    Eye_keep = get_region_pixels(lats_0, lons_0, lat_TC, lon_TC, Eye_r)
-    BT_Eye = ma.masked_array(BT_0, mask=np.invert(Eye_keep))
-    max_temp = np.ma.max(BT_Eye)
-
-    mid_temp = get_mid_temp(min_temp, max_temp, im_type)
-
-    # assumes entire eye is within the preliminary square region
-    Eye_area_r = get_eye_r_0(BT_Eye, mid_temp, Eye_r)
-
-    # new iteration of CDO and eye size
-    CDO_area_r = Eye_area_r + CDO_fixed_width
-
-    Eye_r = (CDO_area_r / 1.5) / 111
-    Eye_keep = get_region_pixels(lats_0, lons_0, lat_TC, lon_TC, Eye_r)
-    BT_Eye = ma.masked_array(BT_0, mask=np.invert(Eye_keep))
-    max_temp = np.ma.max(BT_Eye)
-
-    mid_temp = get_mid_temp(min_temp, max_temp, im_type)
-
-    # assumes entire eye is within the preliminary square region
-    Eye_area_r = get_eye_r_0(BT_Eye, mid_temp, Eye_r)
-    print(
-        f'Eye pixel count: {np.ma.sum(BT_Eye > mid_temp)}, Eye frame count: {np.ma.count(BT_Eye)}, CDO radius: {CDO_area_r}')
-'''
 
 
     #ADT part
@@ -261,7 +237,7 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
                 x = np.array([lat_TC, lon_TC])
                 print(f'Starting array: {x}')
 
-                spiral_fit = False
+                spiral_fit = True
 
                 if spiral_fit:
 
@@ -315,7 +291,6 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
     lats_Eye = ma.masked_array(lats_sliced, mask=Eye_mask)
     lons_Eye = ma.masked_array(lons_sliced, mask=Eye_mask)
 
-    print(get_eye_r(BT_sliced, distances_sliced, max(0.4, R_edge*0.9), mid_temp))
 
     if new_RMW and (Eye_area_r > 5):
         Eye_box_r = get_eye_box_r(lats_Eye, lons_Eye, lat_TC)
@@ -396,27 +371,41 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
             print(f'Symmetrical CDO-wide stdev: {np.ma.std(BT_smoothed)}')
 
 
+        if pm.plot_interp:
+
+            X = np.linspace(lon_min, lon_max, int((lon_max - lon_min) / pm.plot_interp_size) + 1)
+            Y = np.linspace(lat_min, lat_max, int((lat_max - lat_min) / pm.plot_interp_size) + 1)
+            xi, yi = np.meshgrid(X, Y)
+            zi = griddata(np.dstack((lons.ravel(), lats.ravel()))[0], BT_cropped.ravel(), (xi, yi),
+                          method='nearest')
+            lons_plot = xi
+            lats_plot = yi
+            BT_plot = zi
+        else:
+            lons_plot = lons
+            lats_plot = lats
+            BT_plot = BT_cropped
 
     # draw image
-        if make_image:
+        if pm.make_image and not (pm.save_CDO_image and not pm.save_image):
 
             for cmap_name in cmap_name_list:
 
                 if cmap_name[0:2] == im_type:
-                    dict_plotting = {'lons': lons, 'lats': lats, 'BT': BT_cropped, 'lon_TC': lon_TC, 'lat_TC': lat_TC,
+                    dict_plotting = {'lons': lons_plot, 'lats': lats_plot, 'BT': BT_plot, 'lon_TC': lon_TC, 'lat_TC': lat_TC,
 
                                      'cm_size': cm_size, 'im_size': im_size, 'dpi': dpi, 'ratio': ratio,
                                      'Eye_area_r': Eye_area_r,'R_edge': R_edge, 'R_inner': R_inner, 'R_out': R_out,
-                                     'xpTrack': xpTrack, 'ypTrack': ypTrack,
+                                     'extent': [lon_min, lon_max, lat_min, lat_max], 'xpTrack': xpTrack, 'ypTrack': ypTrack,
 
                                      'top_text': top_text, 'pos_text': pos_text, 'temp_text': temp_text,'TC': TC,
                                      'cmap_name': cmap_name,'image_datetime_text': image_datetime_text, 'f_num': f_num,
                                      'sat_name': sat_name, 'b_num': b_num,
 
-                                     'analyse_CDO': analyse_CDO, 'do_ADT': do_ADT, 'new_RMW': new_RMW,
-                                     'no_crop': no_crop,'crop_status': crop_status, 'plot_track': plot_track,
+                                     'dateline_adj': dateline_adj, 'analyse_CDO': analyse_CDO, 'do_ADT': do_ADT, 'new_RMW': new_RMW,
+                                     'no_crop': no_crop,'crop_status': crop_status, 'fix_parallax': fix_parallax,
                                      'save_image': save_image, 'overwrite_image': overwrite_image,
-                                     'show_gridline': show_gridline,'show_center': show_center,
+                                     'show_gridline': show_gridline,'show_center': show_center, 'plot_track': plot_track,
                                      'show_image': show_image, 'show_RMW': show_RMW, 'use_track': use_track}
 
 
