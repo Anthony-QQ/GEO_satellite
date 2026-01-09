@@ -2,15 +2,17 @@ import ABI_plotter
 import GVAR_plotter
 from MODIS_plotter import MODIS_list
 from GEO_plotter import plot_GEO
-from my_cmap import produce_cmap_list
 from my_functions import ABI_list, GVAR_list, FD_list, browse_folder, save_ADT, get_time
 from plot_parameters import (cc_size, cmap_name_list, crop_param,
-    ask_TC,ask_time,do_ADT,draw_full,plot_all_TC_images,
-                             time_range,update_ADT,use_track)
+    ask_TC,ask_time,do_ADT,draw_full,plot_all_TC_images,test_TC,
+                             time_range,update_ADT,use_track,
+                             test_list_TC, test_list_f_num_rel)
 import time
 from multiprocessing import Pool
 import gc
 import plot_parameters as pm
+import my_cmap
+import numpy as np
 
 
 
@@ -58,6 +60,9 @@ def plot_files(TC_list, f_num_rel, plot_count):
     if ask_TC:
         TC_0 = input('Name of TC? Format: yy_Name')
         TC_list = [TC_0]
+    if test_TC:
+        TC_list = test_list_TC
+        plot_count = 1
     print(TC_list)
 
     for sat_name in GVAR_list + ABI_list:
@@ -67,13 +72,20 @@ def plot_files(TC_list, f_num_rel, plot_count):
         print(sat_name, folder_list)
 
         for TC in TC_list:
+
             TC_start_time = time.time()
             if TC in folder_list:
+                if test_TC:
+                    print(folder_list==TC)
+                    f_num_rel = test_list_f_num_rel[TC_list.index(TC)]
+                else:
+                    pass
+
                 file_list = browse_folder(sat_name, TC)
                 im_count = len(file_list)
                 print('There are ' + str(im_count) + ' files for ' + str(TC) + ' in ' + sat_name)
-                start = int(im_count*f_num_rel)
-                end = int(im_count*f_num_rel)+plot_count
+                start = max(int(im_count*f_num_rel), 0)
+                end = min(int(im_count*f_num_rel)+plot_count, im_count - 1)
                 if ask_time and (not time_range or not GVAR_flag):
                     start = max(0,min(int(input('Start #? Max = ' + str(im_count))),im_count))
                     end = max(start,min(int(input('End #? Range = ' + str(start) + ' - ' + str(im_count))),im_count))

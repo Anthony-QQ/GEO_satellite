@@ -8,6 +8,7 @@ show_image = True  #makes the image remain stuck in window
 
 plot_all_TC_images = False  #TAKES TIME
 use_multiprocessing = True  #Use multiprocessing to increast CPU utilisation, but only if expected data count is large
+test_TC = False  #calls designated set of TCs for testing
 
 TC_pos = [21.5, -53.8]  #random initial guess of TC position
 im_extent = [6]  #Length of image, in degrees
@@ -26,6 +27,7 @@ draw_full = False   #Draw with or without cropping
 draw_clean = False   #Draw with or without elements and gridlines in the plot
 overwrite_image = True  #saves new image even when old one exist (DEFAULT)
 use_cartopy = True   #Uses Cartopy to draw images
+force_nhem = False   #Flips SHEM TC to NHEM
 
 use_track = True   #Use track file or not
 plot_track = True   #Show track or not
@@ -34,6 +36,7 @@ cc_size = 1   #Center marker size
 use_CDO_size = True   #
 show_gridline = True   #Show lat/lon gridlines or not
 show_coastline = True   #Show coastlines via Cartopy
+coastline_res = '10m'
 show_RMW = True   #Display RMW or not
 
 new_RMW = True   #Use newer (box) method of finding RMW or not
@@ -49,7 +52,7 @@ default_cmap = False   #Use default or user-specified colormaps
 use_bw_cmap = False   #Use black-and-white colormaps
 
 #cmap_name_list = ['wv_nrl','wv_ssd','wv_cc_2','ir_ca','ir_cc','ir_cc_2']
-cmap_name_list = ['wv_cc_2','ir_cc_2']
+cmap_name_list = ['wv_cc_2','ir_cc_3']
 #cmap_name_list = ['wv_bw','ir_bw']
 
 full_list = ['00_Keith', '01_Erin', '01_Michelle', '96_Hortense', '98_Georges', '98_Mitch', '99_Bret', '99_Floyd', '99_Lenny',
@@ -64,9 +67,33 @@ full_list = ['00_Keith', '01_Erin', '01_Michelle', '96_Hortense', '98_Georges', 
              '23_Jova',
              '24_Milton', '25_Erin', '25_Melissa']
 
+test_list = [['04_Heta', 0.57],
+             ['05_Olaf', 0.53],
+             ['25_Melissa', 0.355],
+             ['05_Rita', 0.5],
+             ['07_Dean', 0.06],
+             ['03_Isabel', 0.87],
+             ['01_Erin', 0.89],
+             ['04_Catarina', 0.67]]
+
+test_list_TC, test_list_f_num_rel = [[i[0] for i in test_list], [i[1] for i in test_list]]
+
 
 #Correlated variables
 time_range = time_range and ask_time
+
+if test_TC:
+    crop_param = TC_pos + [10]
+    update_ADT = False
+    save_image = False
+    save_CDO_image = False
+    make_image = True
+    show_image = True
+    plot_all_TC_images = False
+    draw_clean = True
+    force_nhem = True
+    quick_center = True
+    analyse_CDO = False
 
 if draw_full:
     find_center = False
@@ -100,7 +127,8 @@ else:
     use_multiprocessing = False
 
 if default_cmap:
-    cmap_name_list = ['wv_nrl','wv_ssd','wv_cc_2','wv_bw','ir_bd','ir_ca','ir_cc','ir_cc_2','ir_bw']
+    cmap_name_list = ['wv_nrl','wv_ssd','wv_cc_2','wv_bw','ir_bd','ir_ca','ir_cc','ir_cc_2','ir_cc_3','ir_bw']
+    cmap_name_list = ['ir_cc_3']
 elif use_bw_cmap:
     cmap_name_list = ['wv_bw', 'ir_bw']
 
@@ -108,9 +136,10 @@ if draw_clean:
     show_gridline = False
     plot_track = False
     show_center = False
+    show_coastline = False
 
-if use_cartopy and show_coastline:
+if use_cartopy and show_coastline and not force_nhem:
     #Create coastline Feature, only once! It is reusable. Using lowest resolution of 50m, while 110m and 10m are possible.
-    coast = cfeature.COASTLINE.with_scale('50m')
+    coast = cfeature.COASTLINE.with_scale(coastline_res)
 else:
     coast = None

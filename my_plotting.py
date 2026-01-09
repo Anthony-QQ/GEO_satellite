@@ -7,9 +7,8 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
-from my_cmap import get_cmap
+import my_cmap
 from my_functions import get_folder, r_to_RMW
-from my_cmap import cmap_names, cmap_list
 import plot_parameters as pm
 
 if pm.plot_all_TC_images and (pm.save_image or pm.save_CDO_image) and False:
@@ -204,7 +203,7 @@ def plot_image(**kwargs):
     ax.set_box_aspect(my_input['ratio'] ** 0)
 
     # colourmap limits
-    cmap, vmin, vmax = get_cmap(my_input['cmap_name'], my_input['sat_name'], my_input['b_num'])
+    cmap, vmin, vmax = my_cmap.get_cmap(my_input['cmap_name'], my_input['sat_name'], my_input['b_num'])
 
     # Actual image
     im = ax.pcolormesh(my_input['lons'], my_input['lats'], my_input['BT'],

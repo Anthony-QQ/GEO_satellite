@@ -122,6 +122,12 @@ def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_
     else:
         xpTrack, ypTrack = lon_TC, lat_TC
 
+
+    if lat_TC < 0 and pm.force_nhem:
+        lat_TC *= -1
+        ypTrack *= -1
+        lats_0 *= -1
+
     lat_min, lat_max, lon_min, lon_max = (lat_TC - i_s / 2, lat_TC + i_s / 2,
                                           lon_TC - i_s / 2 / np.cos(np.radians(lat_TC)),
                                           lon_TC + i_s / 2 / np.cos(np.radians(lat_TC)))
