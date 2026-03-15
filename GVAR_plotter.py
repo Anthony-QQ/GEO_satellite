@@ -10,10 +10,10 @@ from my_functions import (CDO_fit, CDO_stats, dateline_treatment, eye_fit_2, get
                           get_detailed_track, get_eye_box_r, get_eye_r, get_fn, get_mid_temp,
                           get_region_pixels, get_table, get_TC_loc, get_temp_text, get_track, image_type)
 from my_plotting import CDO_cs
-from plot_parameters import (analyse_CDO,do_ADT,find_center,
-                             make_image,new_RMW,
-                             plot_track,quick_center,save_image,show_center,show_image,show_RMW,
-                             use_CDO_size,use_track)
+from config import (analyse_CDO, do_ADT, find_center,
+                    make_image, new_RMW,
+                    plot_track, quick_center, save_image, show_center, show_image, show_RMW,
+                    use_CDO_size, use_track)
 
 GVAR_list = ['GOES_'+str(i)+'_GVAR' for i in range(8,16)]
 

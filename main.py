@@ -1,12 +1,12 @@
-from plot_parameters import plot_now
+from config import plot_now
 from GEO_satellite_image_plotter import plot_files
 import time
-import plot_parameters as pm
+import config
 
 start_time = time.time()
 
-TC_list = ['03_Maemi']
-#TC_list = pm.full_list
+TC_list = ['17_Irma']
+#TC_list = config.full_list
 f_num_rel = 0.49 #where to start plotting, from 0 to 1
 plot_count = 1
 

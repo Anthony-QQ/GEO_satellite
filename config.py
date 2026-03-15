@@ -1,4 +1,6 @@
 import cartopy.feature as cfeature
+import os
+from pathlib import Path
 
 update_ADT = False  #saves ADT txt files according to TC name
 save_image = False  #saves TC images to directories sorted by crop status, TC name, band
@@ -50,6 +52,21 @@ do_ADT = True
 time_range = True
 default_cmap = False   #Use default or user-specified colormaps
 use_bw_cmap = False   #Use black-and-white colormaps
+
+# Get the project root directory
+PROJECT_ROOT = Path(__file__).parent
+
+# Define all your paths here
+DATA_ROOT = os.getenv('GEO_DATA_ROOT', PROJECT_ROOT.parents[1])
+NC_FILES_DIR = os.path.join(DATA_ROOT, 'nc_Files')
+ADT_DIR = os.path.join(DATA_ROOT, 'ADT')
+TRACKS_DIR = os.path.join(DATA_ROOT, 'tracks')
+HDF4_FILES_DIR = os.path.join(DATA_ROOT, 'HDF4_Files')
+
+# Configuration settings
+VERBOSE = True
+DEBUG = False
+
 
 #cmap_name_list = ['wv_nrl','wv_ssd','wv_cc_2','ir_ca','ir_cc','ir_cc_2']
 cmap_name_list = ['wv_cc_2','ir_cc_3']

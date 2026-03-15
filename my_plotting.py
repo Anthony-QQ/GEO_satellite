@@ -9,7 +9,7 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 import my_cmap
 from my_functions import get_folder, r_to_RMW
-import plot_parameters as pm
+import config as pm
 
 if pm.plot_all_TC_images and (pm.save_image or pm.save_CDO_image) and False:
     import matplotlib as mpl

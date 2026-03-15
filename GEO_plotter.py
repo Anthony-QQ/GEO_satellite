@@ -20,12 +20,12 @@ from my_functions import (slice_FD, CDO_fit, CDO_stats, dateline_treatment, eye_
                           get_eye_box_r, get_eye_r, get_eye_r_0, get_fn,
                           get_mid_temp, get_region_pixels, get_table, get_TC_loc, get_temp_text, get_track, image_type)
 from my_plotting import CDO_cs, plot_image
-from plot_parameters import (update_ADT, draw_CDO, analyse_CDO, do_ADT, find_center,
-                             make_image, new_RMW, plot_all_TC_images,
-                             plot_track, quick_center, save_image, show_CDO_analysis, save_CDO_image, overwrite_image,
-                             show_gridline, show_center, show_image, show_RMW,use_CDO_size, use_track,
-                             fix_parallax)
-import plot_parameters as pm
+from config import (update_ADT, draw_CDO, analyse_CDO, do_ADT, find_center,
+                    make_image, new_RMW, plot_all_TC_images,
+                    plot_track, quick_center, save_image, show_CDO_analysis, save_CDO_image, overwrite_image,
+                    show_gridline, show_center, show_image, show_RMW, use_CDO_size, use_track,
+                    fix_parallax)
+import config as pm
 
 
 def plot_GEO(f_num, sat_name, TC, im_crop=None, im_size=10, no_crop=False, cmap_name_list=None,

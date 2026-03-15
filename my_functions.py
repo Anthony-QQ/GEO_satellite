@@ -6,6 +6,7 @@ from scipy.interpolate import interp1d, griddata, NearestNDInterpolator
 import matplotlib.pyplot as plt
 import xarray as xr
 
+import config
 import mjd
 
 
@@ -107,19 +108,19 @@ def get_time(f_num, sat_name, TC):
 
 def get_table(sat_name, b_number=3):
     fn = 'D:/Documents/TC and Weather/Program/PyCharm/nc_Files/' + sat_name + '/B_' + str(b_number) + '_table.txt'
+    fn = os.path.join(config.NC_FILES_DIR, sat_name, f'B_{b_number}_table.txt')
+    try:
+        with open(fn, 'r') as table_file:  # Context manager
+            table = table_file.read()
+            table_list = np.array([float(line) for line in table.split('\n') if line.strip()])
+            if not table_list:
+                raise ValueError(f"Table file is empty: {fn} ")
+            return table_list
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Table file not found: {fn}")
+    except ValueError as e:
+        raise ValueError(f"Error parsing table values: {e}")
 
-    table_file = open(str(fn), "r")
-    table = table_file.read()
-    table_list = table.split('\n')
-    table_list = np.array([float(i) for i in table_list])
-    table_file.close()
-
-    # data_folder = Path('nc_Files/')
-    # file_to_open = data_folder / 'sat_name' / ('B_'+str(b_number)+'_table.txt')
-    # table_list_2 = file_to_open.read_text()
-
-    # not usable, as file path uses double slashes instead of single
-    return table_list
 
 
 
@@ -128,9 +129,17 @@ def save_ADT(ADT_list, TC, do_ADT, update_ADT):
     if do_ADT:
         print(ADT_list)
         if update_ADT:
-            ADT_fname = 'D:/Documents/TC and Weather/Program/PyCharm/ADT/' + TC + '.txt'
-            ADT_list = np.array(ADT_list)
-            np.savetxt(ADT_fname, ADT_list)
+            try:
+                os.makedirs(config.ADT_DIR, exist_ok=True)
+
+                ADT_fname = 'D:/Documents/TC and Weather/Program/PyCharm/ADT/' + TC + '.txt'
+                ADT_fname = os.path.join(config.ADT_DIR, f'{TC}.txt')
+
+                ADT_list = np.array(ADT_list)
+                np.savetxt(ADT_fname, ADT_list)
+            except Exception as e:
+                print(f"Failed to save ADT data: {e}")
+                raise
     return 0
 
 
@@ -190,31 +199,39 @@ def dateline_treatment(longitudes):
 
 def get_track(TC, dateline_adj):
     fn = 'D:/Documents/TC and Weather/Program/PyCharm/tracks/' + TC + '_track.txt'
-    table_file = open(str(fn), "r")
-    table = table_file.read()
-    table = table.replace(' ', '')
-    table_1 = table.split('\n')
-    table_list = [i.split(',') for i in table_1]
+    fn = os.path.join(config.TRACKS_DIR, f'{TC}_track.txt')
+    try:
+        with open(fn, 'r') as table_file:
+            table = table_file.read()
+        table = table.replace(' ', '')
+        table_1 = table.split('\n')
+        table_list = [i.split(',') for i in table_1]
 
-    # NHC_type track file
-    if len(table_list[0][0]) == 8:
-        if dateline_adj:
-            track_list = [[mjd.datetime_to_mjd(datetime.strptime(i[0] + i[1], '%Y%m%d%H%M')), ll_to_float(i[4]),
-                           dateline_treatment(ll_to_float(i[5]))] for i in table_list if len(i) > 2]
+        # NHC_type track file
+        if len(table_list[0][0]) == 8:
+            if dateline_adj:
+                track_list = [[mjd.datetime_to_mjd(datetime.strptime(i[0] + i[1], '%Y%m%d%H%M')), ll_to_float(i[4]),
+                               dateline_treatment(ll_to_float(i[5]))] for i in table_list if len(i) > 2]
+            else:
+                track_list = [[mjd.datetime_to_mjd(datetime.strptime(i[0] + i[1], '%Y%m%d%H%M')), ll_to_float(i[4]),
+                               ll_to_float(i[5])] for i in table_list if len(i) > 2]
+        # JTWC_type track file
+        elif dateline_adj:
+            track_list = [[mjd.datetime_to_mjd(datetime.strptime(i[2], '%Y%m%d%H')), ll_to_float(i[6]) / 10,
+                           dateline_treatment(ll_to_float(i[7]) / 10)] for i in table_list if len(i) > 2]
         else:
-            track_list = [[mjd.datetime_to_mjd(datetime.strptime(i[0] + i[1], '%Y%m%d%H%M')), ll_to_float(i[4]),
-                           ll_to_float(i[5])] for i in table_list if len(i) > 2]
-    # JTWC_type track file
-    elif dateline_adj:
-        track_list = [[mjd.datetime_to_mjd(datetime.strptime(i[2], '%Y%m%d%H')), ll_to_float(i[6]) / 10,
-                       dateline_treatment(ll_to_float(i[7]) / 10)] for i in table_list if len(i) > 2]
-    else:
-        track_list = [
-            [mjd.datetime_to_mjd(datetime.strptime(i[2], '%Y%m%d%H')), ll_to_float(i[6]) / 10, ll_to_float(i[7]) / 10]
-            for i in table_list if len(i) > 2]
+            track_list = [
+                [mjd.datetime_to_mjd(datetime.strptime(i[2], '%Y%m%d%H')), ll_to_float(i[6]) / 10, ll_to_float(i[7]) / 10]
+                for i in table_list if len(i) > 2]
 
-    table_file.close()
-    return np.array(track_list)
+
+        return np.array(track_list)
+    except FileNotFoundError:
+        print(f"ERROR: Track file not found: {fn}")
+        raise
+    except Exception as e:
+        print(f"ERROR: Failed to parse track file: {e}")
+        raise
 
 
 def get_TC_loc(track_list, mjd, dateline_adj):
@@ -322,6 +339,7 @@ def slice_FD_zz(BT_0, lats_0, lons_0, lat_min, lat_max, lon_min, lon_max, lat_TC
         angles_sliced = angles
 
         crop_status = 'Cropped'
+    return BT_cropped, lats, lons, distances_sliced, angles_sliced, crop_status
 
 
 def tropical_height(BT_0):
@@ -543,8 +561,9 @@ def CDO_stats(BT_0, distances, angles, r=20, R_find=3, R_step=0.05, CDO_toleranc
               override_T=False):
     try:
         try:
-            R_start = np.round(r/111-R_step/2,1) + R_step/2
-        except:
+            R_start = np.round(r / 111 - R_step / 2, 1) + R_step / 2
+        except (TypeError, ValueError) as e:
+            print(f"Warning: Could not calculate R_start, using default. Error: {e}")
             R_start = 0.225
 
         #binning range

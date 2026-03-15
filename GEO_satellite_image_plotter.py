@@ -3,14 +3,14 @@ import GVAR_plotter
 from MODIS_plotter import MODIS_list
 from GEO_plotter import plot_GEO
 from my_functions import ABI_list, GVAR_list, FD_list, browse_folder, save_ADT, get_time
-from plot_parameters import (cc_size, cmap_name_list, crop_param,
-    ask_TC,ask_time,do_ADT,draw_full,plot_all_TC_images,test_TC,
-                             time_range,update_ADT,use_track,
-                             test_list_TC, test_list_f_num_rel)
+from config import (cc_size, cmap_name_list, crop_param,
+                    ask_TC, ask_time, do_ADT, draw_full, plot_all_TC_images, test_TC,
+                    time_range, update_ADT, use_track,
+                    test_list_TC, test_list_f_num_rel)
 import time
 from multiprocessing import Pool
 import gc
-import plot_parameters as pm
+import config as pm
 import my_cmap
 import numpy as np
 
