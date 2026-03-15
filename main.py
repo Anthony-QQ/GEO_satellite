@@ -5,9 +5,9 @@ import plot_parameters as pm
 
 start_time = time.time()
 
-TC_list = ['15_Patricia']
-TC_list = pm.full_list
-f_num_rel = 0.53 #where to start plotting, from 0 to 1
+TC_list = ['03_Maemi']
+#TC_list = pm.full_list
+f_num_rel = 0.49 #where to start plotting, from 0 to 1
 plot_count = 1
 
 if __name__ == '__main__' and plot_now:

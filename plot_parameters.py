@@ -20,7 +20,7 @@ ask_TC = False   #Ask for TC name, otherwise the code needs to be modified
 ask_time = False   #Ask for TC time, otherwise the code needs to be modified
 
 fix_parallax = True  #Approximate fix for the effects of parallax of GEO satellites
-plot_interp = False   #Plot using interpolated data points
+plot_interp = True   #Plot using interpolated data points
 plot_interp_size = 1 / 111   #Spacing of interpolation of the grid, in degrees latitude/longitude
 
 draw_full = False   #Draw with or without cropping
@@ -55,6 +55,17 @@ use_bw_cmap = False   #Use black-and-white colormaps
 cmap_name_list = ['wv_cc_2','ir_cc_3']
 #cmap_name_list = ['wv_bw','ir_bw']
 
+test_list = [['04_Heta', 0.57],
+             ['05_Olaf', 0.53],
+             ['25_Melissa', 0.355],
+             ['05_Rita', 0.5],
+             ['07_Dean', 0.06],
+             ['03_Isabel', 0.87],
+             ['01_Erin', 0.89],
+             ['04_Catarina', 0.67]]
+
+test_list_TC, test_list_f_num_rel = [[i[0] for i in test_list], [i[1] for i in test_list]]
+
 full_list = ['00_Keith', '01_Erin', '01_Michelle', '96_Hortense', '98_Georges', '98_Mitch', '99_Bret', '99_Floyd', '99_Lenny',
              '03_Lupit', '03_Maemi', '04_Dianmu', '04_Heta', '97_Linda',
              '02_Elida', '02_Hernan', '02_Kenna', '04_Heta10', '05_Meena', '05_Nancy', '05_Olaf', '05_Percy',
@@ -66,17 +77,6 @@ full_list = ['00_Keith', '01_Erin', '01_Michelle', '96_Hortense', '98_Georges', 
              '19_Dorian', '20_Epsilon', '20_Eta', '20_Iota', '20_Laura', '21_Sam', '23_Lee', '24_Milton16',
              '23_Jova',
              '24_Milton', '25_Erin', '25_Melissa']
-
-test_list = [['04_Heta', 0.57],
-             ['05_Olaf', 0.53],
-             ['25_Melissa', 0.355],
-             ['05_Rita', 0.5],
-             ['07_Dean', 0.06],
-             ['03_Isabel', 0.87],
-             ['01_Erin', 0.89],
-             ['04_Catarina', 0.67]]
-
-test_list_TC, test_list_f_num_rel = [[i[0] for i in test_list], [i[1] for i in test_list]]
 
 
 #Correlated variables
