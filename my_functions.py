@@ -144,43 +144,45 @@ def save_ADT(ADT_list, TC, do_ADT, update_ADT):
 
 
 def image_type(sat_name='GOES_15_GVAR', b_num=3):
-    satellite_list = []
-    satellite_list.append(['GOES_16', 8, 'WV'])
-
+    GVAR_WV_bands = [3]
+    GVAR_IR_bands = [4, 5, 6]
+    ABI_WV_bands = [8, 9, 10]
+    ABI_IR_bands = [7, 11, 12, 13, 14, 15, 16]
 
     tp = 'wv'
     if sat_name in GVAR_list:
-        if b_num == 3:
+        if b_num in GVAR_WV_bands:
             tp = 'wv'
-        elif b_num in range(4, 7):
+        elif b_num in GVAR_IR_bands:
             tp = 'ir'
     elif sat_name in ABI_list:
-        if b_num in range(8, 11):
+        if b_num in ABI_WV_bands:
             tp = 'wv'
-        elif b_num in range(7, 17):
+        elif b_num in ABI_IR_bands:
             tp = 'ir'
     return tp
 
 
-def get_sat_longitude(sat_name, year, lon_TC):
-    if sat_name in ['GOES_8_GVAR','GOES_12_GVAR','GOES_13_GVAR','GOES_16','GOES_19']:
-        sat_lon = -75
-    elif sat_name in ['GOES_10_GVAR','GOES_11_GVAR']:
-        sat_lon = -135
-    elif sat_name in ['GOES_15_GVAR','GOES_17','GOES_18']:
-        sat_lon = -137
-    elif sat_name in ['GOES_14_GVAR']:
-        sat_lon = -105
-    elif sat_name in ['H9_FD']:
-        sat_lon = 140
-    elif sat_name == 'GOES_9_GVAR':
-        if year < 2001:
-            sat_lon = -135
-        else:
-            sat_lon = 155
-    else:
-        sat_lon = lon_TC
-    return sat_lon
+SAT_LONGITUDE_MAPPING = {
+    'GOES_8_GVAR': -75,
+    'GOES_12_GVAR': -75,
+    'GOES_13_GVAR': -75,
+    'GOES_16': -75,
+    'GOES_19': -75,
+    'GOES_10_GVAR': -135,
+    'GOES_11_GVAR': -135,
+    'GOES_15_GVAR': -137,
+    'GOES_17': -137,
+    'GOES_18': -137,
+    'GOES_14_GVAR': -105,
+    'H9_FD': 140,
+}
+
+def get_sat_longitude(sat_name: str, year: int, lon_TC: float) -> float:
+    """Get satellite longitude, with special handling for GOES_9_GVAR."""
+    if sat_name == 'GOES_9_GVAR':
+        return -135 if year < 2001 else 155
+    return SAT_LONGITUDE_MAPPING.get(sat_name, lon_TC)
 
 
 
