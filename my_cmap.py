@@ -23,7 +23,7 @@ def produce_cmap(cvals, colors, name):
     vmin, vmax = min(cvals), max(cvals)
     norm = plt.Normalize(vmin, vmax)
     tuples = list(zip(map(norm, cvals), colors))
-    cmap = LinearSegmentedColormap.from_list(name, tuples, N=4196, gamma=1.0)
+    cmap = LinearSegmentedColormap.from_list(name, tuples, N=4096, gamma=1.0)
     # mpl.colormaps.register(cmap,name=name,force=false)
     return list((cmap, vmin, vmax))
 
@@ -47,9 +47,21 @@ def cmap_fetch(name, type='ir'):
          '#a0a0a0', '#a0a0a0',
          '#6e6e6e', '#6e6e6e',
          '#3c3c3c', '#3c3c3c',
-         '#c9c9c9', '#6c6c6c',
+         '#cacaca', '#6d6d6d',
          'w', 'k']
     ],
+    '''
+    Alternative: [-80.9,
+         -80.9, -76.0,
+         -76.0, -69.7,
+         -69.7, -64.2,
+         -64.2, -54.2,
+         -54.2, -42.0,
+         -42.0, -30.6,
+         -30.6, 9.3,
+         9.3, 28.2]
+         '''
+        
     'ir_bw': [
         [-80, 30],
         ['w', 'k']
@@ -784,10 +796,10 @@ def produce_cmap_list():
 
 
 def get_cmap_2(name='wv_nrl', sat_name='GOES_15_GVAR', b_num=3):
-    '''
+
     cmap_names = ['wv_nrl', 'wv_ssd', 'wv_nrl_extend']
     cmap_list = []
-    '''
+
 
     '''
     cdict_nrl = {'red': [[0.0, 0.5, 0.5],

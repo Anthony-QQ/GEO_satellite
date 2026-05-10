@@ -17,6 +17,28 @@ if pm.plot_all_TC_images and (pm.save_image or pm.save_CDO_image) and False:
 
 
 def remove_1st_harmonic(BT_no_mean, angles, r_indices, i):
+
+    """
+    Remove the 1st harmonic from a given set of BT values.
+
+    Parameters
+    ----------
+    BT_no_mean : numpy.ma.MaskedArray
+        BT values with the mean removed.
+    angles : numpy.ma.MaskedArray
+        Angles corresponding to the BT values.
+    r_indices : numpy.ma.MaskedArray
+        Indices corresponding to the BT values.
+    i : int
+        Index for the given set of BT values.
+
+    Returns
+    -------
+    float
+        Standard deviation of the BT values after removing the 1st harmonic.
+
+    """
+
     BT = ma.masked_where(r_indices != i,BT_no_mean)
     angles = ma.masked_where(r_indices != i, angles)
 
@@ -38,6 +60,28 @@ def remove_1st_harmonic(BT_no_mean, angles, r_indices, i):
 
 
 def CDO_cs(BT_0, distances, angles, b_dict=None, n_dict=None, r=10, R_find=3, R_step=0.05):
+
+
+    """
+    Calculates the temperature and standard deviation of each ring of a given temperature field.
+
+    Parameters:
+    BT_0 (numpy masked array): Temperature field to be analyzed.
+    distances (numpy array): Distances from the center of the image for each pixel.
+    angles (numpy array): Angles of each pixel in the image from the center.
+    b_dict (dict): Dictionary containing the parameters for plotting: show (bool), do (bool), save (bool).
+    n_dict (dict): Dictionary containing the parameters for the CDO analysis: R_inner, R_out, R_edge, R_eye (float).
+
+    Returns:
+    0
+
+    Notes:
+    - The CDO analysis is done in the interval [R_eye - R_step/2, R_eye + R_find].
+    - The standard deviation of the temperature field is calculated for each ring.
+    - The global coldest ring is the ring with the lowest temperature.
+    - The global smoothest ring is the ring with the lowest standard deviation.
+    - If the temperature field is symmetric, the standard deviation of the temperature field is calculated for each ring after removing the first harmonic.
+    """
 
     if b_dict is None:
         show, do, save = False, False, False

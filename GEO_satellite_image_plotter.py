@@ -53,6 +53,19 @@ def _worker_plot_GEO(args):
 
 
 def plot_files(TC_list, f_num_rel, plot_count):
+    '''
+    Plot GEO satellite images for one or more tropical cyclones over a selected file index or time range.
+    This function optionally computes and saves Advanced Dvorak Technique (ADT) metrics and can use multiprocessing for speed.
+
+    Args:
+        TC_list: List of tropical cyclone identifiers to process.
+        f_num_rel: Relative starting position within the available files (0–1, where 0 is the first file).
+        plot_count: Number of consecutive files to plot starting from the derived index.
+
+    Returns:
+        None
+    '''
+
     f_num_list = [0]
     print(ABI_list)
 
@@ -85,7 +98,7 @@ def plot_files(TC_list, f_num_rel, plot_count):
                 im_count = len(file_list)
                 print('There are ' + str(im_count) + ' files for ' + str(TC) + ' in ' + sat_name)
                 start = max(int(im_count*f_num_rel), 0)
-                end = min(int(im_count*f_num_rel)+plot_count, im_count - 1)
+                end = min(int(im_count*f_num_rel)+plot_count, im_count)
                 if ask_time and (not time_range or not GVAR_flag):
                     start = max(0,min(int(input('Start #? Max = ' + str(im_count))),im_count))
                     end = max(start,min(int(input('End #? Range = ' + str(start) + ' - ' + str(im_count))),im_count))
